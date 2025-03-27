@@ -12,6 +12,7 @@ class Post(db.Model):
             'id': self.id,
             'content': self.content,
             'profile': self.profile.serialize(),
+            'likes_counts': len(self.likes),
             'likes': list(map(lambda x: x.serialize(), self.likes)),
         }
     def __repr__(self):
@@ -24,6 +25,7 @@ class Profile(db.Model):
     password = db.Column(db.String(80), unique=False, nullable=False)
     email = db.Column(db.String(80), unique=False, nullable=False)
     posts = db.relationship('Post', backref='profile', lazy=True)
+    liked_posts = db.relationship('Like', backref='liker', lazy=True)
 
     def serialize(self):
         # Do not return password (obviously).
@@ -42,7 +44,7 @@ class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     profile_id = db.Column(db.Integer, db.ForeignKey('profile.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
-    profile = db.relationship('Profile', uselist=False, lazy=True)
+    profile = db.relationship('Profile', uselist=False, lazy=True, overlaps="liked_posts,liker")
 
     def serialize(self):
         return {

@@ -88,6 +88,7 @@ def login():
         return render_template('login_form.html', message='Invalid username/password')
 
     session[PROFILE_ID] = profile.id
+    print(f"User {profile.id} logged in")
     return redirect(url_for('main_feed'))
 
 
@@ -134,11 +135,45 @@ def create_post():
     db.session.commit()
     return jsonify(new_post.serialize())
 
-@app.route('/api/like/<post_id>/', methods=['POST'])
-def like_post():
-    return jsonify({ 'error': 'not supported yet' }), HTTPStatus.NOT_IMPLEMENTED
 
-@app.route('/api/unlike/<post_id>/', methods=['POST'])
-def unlike_post():
-    return jsonify({ 'error': 'not supported yet' }), HTTPStatus.NOT_IMPLEMENTED
+
+
+@app.route('/api/like/<int:post_id>/', methods=['POST'])
+def like_post(post_id):
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post not found'}), HTTPStatus.NOT_FOUND
+
+    profile = Profile.query.get(session.get(PROFILE_ID))
+    if not profile:
+        return jsonify({'error': 'User not logged in'}), HTTPStatus.FORBIDDEN
+
+    existing_like = Like.query.filter_by(post_id=post_id, profile_id=profile.id).first()
+    if existing_like:
+        return jsonify({'error': 'Already liked'}), HTTPStatus.BAD_REQUEST
+
+    new_like = Like(post_id=post_id, profile_id=profile.id)
+    db.session.add(new_like)
+    db.session.commit()
+
+    return jsonify(post.serialize())
+
+@app.route('/api/unlike/<int:post_id>/', methods=['POST'])
+def unlike_post(post_id):
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post not found'}), HTTPStatus.NOT_FOUND
+
+    profile = Profile.query.get(session.get(PROFILE_ID))
+    if not profile:
+        return jsonify({'error': 'User not logged in'}), HTTPStatus.FORBIDDEN
+
+    existing_like = Like.query.filter_by(post_id=post_id, profile_id=profile.id).first()
+    if not existing_like:
+        return jsonify({'error': 'Not liked yet'}), HTTPStatus.BAD_REQUEST
+
+    db.session.delete(existing_like)
+    db.session.commit()
+
+    return jsonify(post.serialize())
 
