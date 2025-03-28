@@ -150,6 +150,7 @@ def like_post(post_id):
 
     existing_like = Like.query.filter_by(post_id=post_id, profile_id=profile.id).first()
     if existing_like:
+        print(f"User {profile.id} already liked post {post_id}")
         return jsonify({'error': 'Already liked'}), HTTPStatus.BAD_REQUEST
 
     new_like = Like(post_id=post_id, profile_id=profile.id)

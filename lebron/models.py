@@ -13,7 +13,7 @@ class Post(db.Model):
             'content': self.content,
             'profile': self.profile.serialize(),
             'likes_counts': len(self.likes),
-            'likes': list(map(lambda x: x.serialize(), self.likes)),
+            'likes': list(map(lambda x: x.profile.username, self.likes)),
         }
     def __repr__(self):
         return f'<Post id={self.id}>'
